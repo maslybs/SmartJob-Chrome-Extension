@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>SmartJob</title>
+    <style>
+        h1,
+        h2,
+        div,
+        p,
+        span,
+        button,
+        img {
+            margin: 0;
+            padding: 0;
+            overflow: none;
+        }
+
+        body {
+            min-width: 200px;
+            font-size: 1em;
+        }
+
+        button {
+            height: 40px;
+            min-height: 40px;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- <div style="border: 1px dashed #cccccc; padding: 1vw 1vh; margin-bottom: 2vh;">
+        <h1>
+            <img src="https://cdn.centris.ca/public/qc/consumersite/images/favicon.ico" alt="Centris.ca" />
+        </h1>
+        <div>
+            <h2>Find Cashflow Positive Properties</h2>
+            <div>
+                <p>Interest Rate: 7.3%</p>
+                <p>Amortization: 25 years</p>
+            </div>
+            <button id="btnCentris" style="width: 100%; min-height: 12vh; font-size: 12pt"
+                title="This will take a few minutes.">Run</button>
+        </div>
+    </div> -->
+    <div style="border: 1px dashed #cccccc; padding: 10px; margin-bottom: 2vh;">
+        <h1 style="text-align: center;">
+            <img src="assets/icon48.png" alt="SmartJob" />
+        </h1>
+        <div>
+            <div class="margin: 10px;">
+                <label for="inputAuto">
+                    <input name="checkboxHireRate" type="checkbox" /> Відсоток найму
+                </label>
+            </div>
+            <div class="margin: 10px;">
+                <label for="inputAuto">
+                    <input name="checkboxConnectsRequired" type="checkbox" /> Потрібні конекти
+                </label>
+            </div>
+            <div class="margin: 10px;">
+                <label for="inputAuto">
+                    <input name="checkboxMemberSince" type="checkbox" /> Клієнт з
+                </label>
+            </div>
+            <button id="btnUpwork" style="width: 100%; min-height: 12vh; font-size: 12pt; margin-top: 10px"
+                title="Це може зайняти кілька хвилин.">Запустити</button>
+            <div class="margin: 10px;">
+                <label for="inputAuto">
+                    <input name="checkboxAutoLoad" type="checkbox" /> Запускати під час завантаження сторінки?
+                </label>
+            </div>
+            <button id="openSettings" style="width: 100%; min-height: 6vh; font-size: 10pt; margin-top: 6px;"
+                title="Відкрити налаштування SmartJob">Налаштування</button>
+        </div>
+    </div>
+    <script type="module" src="popup.js"></script>
+</body>
+
+</html>

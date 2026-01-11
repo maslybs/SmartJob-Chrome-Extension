@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Налаштування SmartJob</title>
+    <link rel="stylesheet" href="options.css" />
+</head>
+<body>
+    <div class="page">
+        <div class="header">
+            <div class="brand">
+                <img src="assets/icon48.png" alt="SmartJob" />
+                <div>
+                    <h1>SmartJob</h1>
+                    <p>Налаштування рейтингу вакансій Upwork</p>
+                </div>
+            </div>
+            <div class="actions">
+                <button id="reset" class="ghost" type="button">Скинути</button>
+                <button id="save" class="primary" type="button">Зберегти</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Основні параметри</h2>
+            <label class="toggle">
+                <input id="checkboxHireRate" type="checkbox" />
+                Відсоток найму
+            </label>
+            <label class="toggle">
+                <input id="checkboxConnectsRequired" type="checkbox" />
+                Потрібні конекти
+            </label>
+            <label class="toggle">
+                <input id="checkboxMemberSince" type="checkbox" />
+                Клієнт з
+            </label>
+            <label class="toggle">
+                <input id="checkboxAutoLoad" type="checkbox" />
+                Запускати під час завантаження сторінки
+            </label>
+        </div>
+
+        <div class="card">
+            <h2>Бейдж оцінки</h2>
+            <label class="toggle">
+                <input id="scoreEnabled" type="checkbox" />
+                Показувати оцінку на картках вакансій
+            </label>
+            <div class="grid">
+                <label class="weight">
+                    Бажаний бюджет (USD)
+                    <input id="budgetTarget" type="number" step="50" min="0" />
+                </label>
+                <label class="weight">
+                    Бажані витрати клієнта (USD)
+                    <input id="clientPaidTarget" type="number" step="100" min="0" />
+                </label>
+                <label class="weight">
+                    Бажаний рейтинг клієнта (0–5)
+                    <input id="clientRatingTarget" type="number" step="0.1" min="0" max="5" />
+                </label>
+            </div>
+            <div class="field">
+                <label for="preferredCountries">Бажані країни</label>
+                <span>Список через кому або з нового рядка. Використовується для оцінки країни.</span>
+                <textarea id="preferredCountries" spellcheck="false"></textarea>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>AI оцінка завдання</h2>
+            <p class="hint">Кнопка "Оцінити" відправляє опис завдання в OpenRouter і повертає рекомендацію.</p>
+            <p class="hint">Якщо бачите помилку політики даних — змініть privacy: https://openrouter.ai/settings/privacy</p>
+            <div class="grid">
+                <label class="weight">
+                    OpenRouter API ключ
+                    <input id="openrouterApiKey" type="password" spellcheck="false" />
+                </label>
+                <label class="weight">
+                    Модель
+                    <input id="openrouterModel" type="text" spellcheck="false" />
+                </label>
+            </div>
+            <div class="field">
+                <label for="openrouterPrompt">Промпт</label>
+                <span>Задайте формат відповіді. Рекомендовано: "ВАРТО/НЕ ВАРТО" + 2-3 причини.</span>
+                <textarea id="openrouterPrompt" spellcheck="false"></textarea>
+            </div>
+            <div class="test-row">
+                <button id="testModel" class="ghost" type="button">Тестувати модель</button>
+                <span id="testResult" class="test-result"></span>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Важливість критеріїв</h2>
+            <p class="hint">0 — не враховувати, 5 — дуже важливо. Це коефіцієнти впливу, а не самі значення.</p>
+            <div class="grid two-columns">
+                <label class="weight">
+                    Пропозиції (важливість)
+                    <div class="range-row">
+                        <input type="range" step="0.5" min="0" max="5" data-weight="proposals" />
+                        <span class="range-value" data-value-for="proposals"></span>
+                    </div>
+                </label>
+                <label class="weight">
+                    Рівень досвіду (важливість)
+                    <div class="range-row">
+                        <input type="range" step="0.5" min="0" max="5" data-weight="experience" />
+                        <span class="range-value" data-value-for="experience"></span>
+                    </div>
+                </label>
+                <label class="weight">
+                    Бюджет (важливість)
+                    <span class="subhint">Оцінка бюджету порівнюється з «Бажаним бюджетом» вище.</span>
+                    <div class="range-row">
+                        <input type="range" step="0.5" min="0" max="5" data-weight="budget" />
+                        <span class="range-value" data-value-for="budget"></span>
+                    </div>
+                </label>
+                <label class="weight">
+                    Орієнтовна тривалість (важливість)
+                    <div class="range-row">
+                        <input type="range" step="0.5" min="0" max="5" data-weight="time" />
+                        <span class="range-value" data-value-for="time"></span>
+                    </div>
+                </label>
+                <label class="weight">
+                    Підтвердження оплати (важливість)
+                    <div class="range-row">
+                        <input type="range" step="0.5" min="0" max="5" data-weight="paymentVerified" />
+                        <span class="range-value" data-value-for="paymentVerified"></span>
+                    </div>
+                </label>
+                <label class="weight">
+                    Витрати клієнта (важливість)
+                    <span class="subhint">Оцінка витрат порівнюється з «Бажаними витратами клієнта» вище.</span>
+                    <div class="range-row">
+                        <input type="range" step="0.5" min="0" max="5" data-weight="clientPaid" />
+                        <span class="range-value" data-value-for="clientPaid"></span>
+                    </div>
+                </label>
+                <label class="weight">
+                    Рейтинг клієнта (важливість)
+                    <span class="subhint">Оцінка рейтингу порівнюється з «Бажаним рейтингом клієнта» вище.</span>
+                    <div class="range-row">
+                        <input type="range" step="0.5" min="0" max="5" data-weight="clientRating" />
+                        <span class="range-value" data-value-for="clientRating"></span>
+                    </div>
+                </label>
+                <label class="weight">
+                    Свіжість публікації (важливість)
+                    <div class="range-row">
+                        <input type="range" step="0.5" min="0" max="5" data-weight="postingTime" />
+                        <span class="range-value" data-value-for="postingTime"></span>
+                    </div>
+                </label>
+                <label class="weight">
+                    Позначка Featured (важливість)
+                    <div class="range-row">
+                        <input type="range" step="0.5" min="0" max="5" data-weight="featured" />
+                        <span class="range-value" data-value-for="featured"></span>
+                    </div>
+                </label>
+                <label class="weight">
+                    Країна клієнта (важливість)
+                    <div class="range-row">
+                        <input type="range" step="0.5" min="0" max="5" data-weight="clientCountry" />
+                        <span class="range-value" data-value-for="clientCountry"></span>
+                    </div>
+                </label>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Оцінка країни</h2>
+            <p class="hint">Ці значення додаються до оцінки, якщо країна клієнта у вашому списку або поза ним.</p>
+            <div class="grid">
+                <label class="weight">
+                    Бал для бажаних країн
+                    <input id="countryPreferredScore" type="number" step="1" min="-10" max="10" />
+                </label>
+                <label class="weight">
+                    Бал для інших країн
+                    <input id="countryOtherScore" type="number" step="1" min="-10" max="10" />
+                </label>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Як працює рейтинг</h2>
+            <p class="hint">Фінальний бал = середнє значення всіх знайдених критеріїв з урахуванням важливості.</p>
+            <p class="hint">Бюджет: значення масштабується від 0 до 10 відносно «Бажаного бюджету».</p>
+            <p class="hint">Витрати клієнта: 0 → -5, далі масштабується від 0 до 10 відносно «Бажаних витрат».</p>
+            <p class="hint">Payment verified: є → 10, немає → -10.</p>
+            <p class="hint">Рейтинг клієнта масштабується від 0 до 10 відносно «Бажаного рейтингу».</p>
+            <p class="hint">Свіжість: що новіше оголошення, то вищий бал.</p>
+            <p class="hint">Якщо якогось поля немає — воно не впливає на підсумок.</p>
+        </div>
+
+        <div id="status" class="status"></div>
+    </div>
+
+    <script src="options.js"></script>
+</body>
+</html>
