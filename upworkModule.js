@@ -185,20 +185,23 @@ function setCachedEvaluation(cache, key, entry) {
 
 const defaultScoreSettings = {
     enabled: true,
+    hireRateMin: 60,
+    hireRateTarget: 70,
     budgetTarget: 1000,
     clientPaidTarget: 5000,
     clientRatingTarget: 4.5,
     weights: {
-        proposals: 1,
-        experience: 1,
-        budget: 1,
-        time: 1,
+        hireRate: 5,
+        clientPaid: 4,
+        clientCountry: 3,
+        budget: 3,
+        clientRating: 3,
         paymentVerified: 1,
-        clientPaid: 1,
-        clientRating: 1,
-        postingTime: 1,
-        featured: 1,
-        clientCountry: 1,
+        experience: 1,
+        proposals: 0.5,
+        time: 0.5,
+        postingTime: 0.5,
+        featured: 0.5,
     },
     countryPreferredScore: 10,
     countryOtherScore: 0,
@@ -322,6 +325,27 @@ function scoreBudget(value, settings) {
     return Math.min(10, (amount / target) * 10);
 }
 
+function parseHireRate(value) {
+    if (!value) return null;
+    const match = String(value).match(/(\d{1,3})%\s*hire rate/i);
+    if (!match) return null;
+    const percent = parseInt(match[1], 10);
+    if (!Number.isFinite(percent)) return null;
+    return Math.max(0, Math.min(100, percent));
+}
+
+function scoreHireRate(value, settings) {
+    const rate = typeof value === 'number' ? value : parseHireRate(value);
+    if (rate === null || rate === undefined) return null;
+    const minRate = toNumber(settings.hireRateMin, defaultScoreSettings.hireRateMin);
+    const targetRate = toNumber(settings.hireRateTarget, defaultScoreSettings.hireRateTarget);
+    const low = Math.max(0, Math.min(minRate, 100));
+    const high = Math.max(low + 1, Math.min(targetRate, 100));
+    if (rate <= low) return 0;
+    if (rate >= high) return 10;
+    return ((rate - low) / (high - low)) * 10;
+}
+
 function scoreTime(value) {
     if (!value) return null;
     const lower = value.toLowerCase().trim();
@@ -428,9 +452,11 @@ function scoreCountry(value, settings) {
         : toNumber(settings.countryOtherScore, defaultScoreSettings.countryOtherScore);
 }
 
-function calculateScore(card, doc, settings) {
+function calculateScore(card, doc, settings, details) {
     const getValue = selectors => getText(card, selectors) || getText(doc, selectors);
 
+    const hireRateText = details?.hireRateText || extractHireRateText(card, doc);
+    const hireRate = scoreHireRate(hireRateText, settings);
     const proposals = scoreProposals(getValue([
         'strong[data-test="proposals"]',
         '[data-test="proposals-tier"] > strong',
@@ -475,6 +501,7 @@ function calculateScore(card, doc, settings) {
     const clientCountry = scoreCountry(countryText, settings);
 
     const scored = [
+        { value: hireRate, weight: settings.weights.hireRate },
         { value: proposals, weight: settings.weights.proposals },
         { value: experience, weight: settings.weights.experience },
         { value: budget, weight: settings.weights.budget },
@@ -515,21 +542,40 @@ function getRowClass(score) {
     return 'smartjob-row-red';
 }
 
-function getHireRateNode(card, doc) {
+function extractHireRateText(card, doc) {
     const selectors = [
         'li[data-qa="client-job-posting-stats"]',
         'li[data-test="client-job-posting-stats"]',
         '[data-qa="client-job-posting-stats"]',
         '[data-test="client-job-posting-stats"]',
+        '[data-test="job-activity"]',
+        '[data-test="job-activity-summary"]',
+        '[data-test="job-activity-data"]',
     ];
     let source = null;
     for (const selector of selectors) {
         source = card?.querySelector(selector) || doc?.querySelector(selector);
         if (source) break;
     }
-    if (!source) return null;
-    const inner = source.querySelector('div') || source;
-    const text = inner?.innerText?.trim() || source?.innerText?.trim();
+    if (source) {
+        const inner = source.querySelector('div') || source;
+        const text = inner?.innerText?.trim() || source?.innerText?.trim();
+        if (text) return text;
+    }
+
+    const textSource = card?.innerText || doc?.body?.innerText || '';
+    if (!textSource) return null;
+    const hireMatch = textSource.match(/(\d{1,3})%\s*hire rate/i);
+    const openMatch = textSource.match(/(\d+)\s*open jobs?/i);
+    if (!hireMatch && !openMatch) return null;
+    const parts = [];
+    if (hireMatch) parts.push(`${hireMatch[1]}% hire rate`);
+    if (openMatch) parts.push(`${openMatch[1]} open jobs`);
+    return parts.join(', ');
+}
+
+function getHireRateNode(card, doc) {
+    const text = extractHireRateText(card, doc);
     if (!text) return null;
     const node = document.createElement('div');
     node.textContent = text;
@@ -940,7 +986,7 @@ export async function upwork() {
         }
 
         if (scoreSettings.enabled) {
-            const score = calculateScore(refNode, doc, scoreSettings);
+            const score = calculateScore(refNode, doc, scoreSettings, null);
             renderScoreBadge(refNode, score);
         }
 

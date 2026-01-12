@@ -1,19 +1,22 @@
 const defaultScoreSettings = {
   enabled: true,
+  hireRateMin: 60,
+  hireRateTarget: 70,
   budgetTarget: 1000,
   clientPaidTarget: 5000,
   clientRatingTarget: 4.5,
   weights: {
-    proposals: 1,
-    experience: 1,
-    budget: 1,
-    time: 1,
+    hireRate: 5,
+    clientPaid: 4,
+    clientCountry: 3,
+    budget: 3,
+    clientRating: 3,
     paymentVerified: 1,
-    clientPaid: 1,
-    clientRating: 1,
-    postingTime: 1,
-    featured: 1,
-    clientCountry: 1,
+    experience: 1,
+    proposals: 0.5,
+    time: 0.5,
+    postingTime: 0.5,
+    featured: 0.5,
   },
   countryPreferredScore: 10,
   countryOtherScore: 0,
@@ -69,6 +72,8 @@ const scoreEnabledEl = document.getElementById('scoreEnabled');
 const preferredCountriesEl = document.getElementById('preferredCountries');
 const preferredScoreEl = document.getElementById('countryPreferredScore');
 const otherScoreEl = document.getElementById('countryOtherScore');
+const hireRateMinEl = document.getElementById('hireRateMin');
+const hireRateTargetEl = document.getElementById('hireRateTarget');
 const budgetTargetEl = document.getElementById('budgetTarget');
 const clientPaidTargetEl = document.getElementById('clientPaidTarget');
 const clientRatingTargetEl = document.getElementById('clientRatingTarget');
@@ -141,6 +146,8 @@ function applySettings(settings, checkboxes, llmSettings) {
   preferredCountriesEl.value = formatCountries(settings.preferredCountries);
   preferredScoreEl.value = toNumber(settings.countryPreferredScore, defaultScoreSettings.countryPreferredScore);
   otherScoreEl.value = toNumber(settings.countryOtherScore, defaultScoreSettings.countryOtherScore);
+  hireRateMinEl.value = toNumber(settings.hireRateMin, defaultScoreSettings.hireRateMin);
+  hireRateTargetEl.value = toNumber(settings.hireRateTarget, defaultScoreSettings.hireRateTarget);
   budgetTargetEl.value = toNumber(settings.budgetTarget, defaultScoreSettings.budgetTarget);
   clientPaidTargetEl.value = toNumber(settings.clientPaidTarget, defaultScoreSettings.clientPaidTarget);
   clientRatingTargetEl.value = toNumber(settings.clientRatingTarget, defaultScoreSettings.clientRatingTarget);
@@ -170,6 +177,8 @@ function collectSettings() {
 
   return {
     enabled: scoreEnabledEl.checked,
+    hireRateMin: toNumber(hireRateMinEl.value, defaultScoreSettings.hireRateMin),
+    hireRateTarget: toNumber(hireRateTargetEl.value, defaultScoreSettings.hireRateTarget),
     budgetTarget: toNumber(budgetTargetEl.value, defaultScoreSettings.budgetTarget),
     clientPaidTarget: toNumber(clientPaidTargetEl.value, defaultScoreSettings.clientPaidTarget),
     clientRatingTarget: toNumber(clientRatingTargetEl.value, defaultScoreSettings.clientRatingTarget),

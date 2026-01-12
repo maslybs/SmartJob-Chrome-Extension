@@ -50,6 +50,14 @@
             </label>
             <div class="grid">
                 <label class="weight">
+                    Мінімальний hire rate (%)
+                    <input id="hireRateMin" type="number" step="1" min="0" max="100" />
+                </label>
+                <label class="weight">
+                    Цільовий hire rate (%)
+                    <input id="hireRateTarget" type="number" step="1" min="0" max="100" />
+                </label>
+                <label class="weight">
                     Бажаний бюджет (USD)
                     <input id="budgetTarget" type="number" step="50" min="0" />
                 </label>
@@ -97,41 +105,13 @@
         <div class="card">
             <h2>Важливість критеріїв</h2>
             <p class="hint">0 — не враховувати, 5 — дуже важливо. Це коефіцієнти впливу, а не самі значення.</p>
+            <p class="hint">Рекомендований порядок: hire rate → витрати клієнта → країна → бюджет → рейтинг клієнта.</p>
             <div class="grid two-columns">
                 <label class="weight">
-                    Пропозиції (важливість)
+                    Hire rate (важливість)
                     <div class="range-row">
-                        <input type="range" step="0.5" min="0" max="5" data-weight="proposals" />
-                        <span class="range-value" data-value-for="proposals"></span>
-                    </div>
-                </label>
-                <label class="weight">
-                    Рівень досвіду (важливість)
-                    <div class="range-row">
-                        <input type="range" step="0.5" min="0" max="5" data-weight="experience" />
-                        <span class="range-value" data-value-for="experience"></span>
-                    </div>
-                </label>
-                <label class="weight">
-                    Бюджет (важливість)
-                    <span class="subhint">Оцінка бюджету порівнюється з «Бажаним бюджетом» вище.</span>
-                    <div class="range-row">
-                        <input type="range" step="0.5" min="0" max="5" data-weight="budget" />
-                        <span class="range-value" data-value-for="budget"></span>
-                    </div>
-                </label>
-                <label class="weight">
-                    Орієнтовна тривалість (важливість)
-                    <div class="range-row">
-                        <input type="range" step="0.5" min="0" max="5" data-weight="time" />
-                        <span class="range-value" data-value-for="time"></span>
-                    </div>
-                </label>
-                <label class="weight">
-                    Підтвердження оплати (важливість)
-                    <div class="range-row">
-                        <input type="range" step="0.5" min="0" max="5" data-weight="paymentVerified" />
-                        <span class="range-value" data-value-for="paymentVerified"></span>
+                        <input type="range" step="0.5" min="0" max="5" data-weight="hireRate" />
+                        <span class="range-value" data-value-for="hireRate"></span>
                     </div>
                 </label>
                 <label class="weight">
@@ -143,11 +123,54 @@
                     </div>
                 </label>
                 <label class="weight">
+                    Країна клієнта (важливість)
+                    <div class="range-row">
+                        <input type="range" step="0.5" min="0" max="5" data-weight="clientCountry" />
+                        <span class="range-value" data-value-for="clientCountry"></span>
+                    </div>
+                </label>
+                <label class="weight">
+                    Бюджет (важливість)
+                    <span class="subhint">Оцінка бюджету порівнюється з «Бажаним бюджетом» вище.</span>
+                    <div class="range-row">
+                        <input type="range" step="0.5" min="0" max="5" data-weight="budget" />
+                        <span class="range-value" data-value-for="budget"></span>
+                    </div>
+                </label>
+                <label class="weight">
                     Рейтинг клієнта (важливість)
                     <span class="subhint">Оцінка рейтингу порівнюється з «Бажаним рейтингом клієнта» вище.</span>
                     <div class="range-row">
                         <input type="range" step="0.5" min="0" max="5" data-weight="clientRating" />
                         <span class="range-value" data-value-for="clientRating"></span>
+                    </div>
+                </label>
+                <label class="weight">
+                    Підтвердження оплати (важливість)
+                    <div class="range-row">
+                        <input type="range" step="0.5" min="0" max="5" data-weight="paymentVerified" />
+                        <span class="range-value" data-value-for="paymentVerified"></span>
+                    </div>
+                </label>
+                <label class="weight">
+                    Рівень досвіду (важливість)
+                    <div class="range-row">
+                        <input type="range" step="0.5" min="0" max="5" data-weight="experience" />
+                        <span class="range-value" data-value-for="experience"></span>
+                    </div>
+                </label>
+                <label class="weight">
+                    Пропозиції (важливість)
+                    <div class="range-row">
+                        <input type="range" step="0.5" min="0" max="5" data-weight="proposals" />
+                        <span class="range-value" data-value-for="proposals"></span>
+                    </div>
+                </label>
+                <label class="weight">
+                    Орієнтовна тривалість (важливість)
+                    <div class="range-row">
+                        <input type="range" step="0.5" min="0" max="5" data-weight="time" />
+                        <span class="range-value" data-value-for="time"></span>
                     </div>
                 </label>
                 <label class="weight">
@@ -162,13 +185,6 @@
                     <div class="range-row">
                         <input type="range" step="0.5" min="0" max="5" data-weight="featured" />
                         <span class="range-value" data-value-for="featured"></span>
-                    </div>
-                </label>
-                <label class="weight">
-                    Країна клієнта (важливість)
-                    <div class="range-row">
-                        <input type="range" step="0.5" min="0" max="5" data-weight="clientCountry" />
-                        <span class="range-value" data-value-for="clientCountry"></span>
                     </div>
                 </label>
             </div>
@@ -192,6 +208,7 @@
         <div class="card">
             <h2>Як працює рейтинг</h2>
             <p class="hint">Фінальний бал = середнє значення всіх знайдених критеріїв з урахуванням важливості.</p>
+            <p class="hint">Hire rate: нижче мінімального → 0, між мінімальним і цільовим → лінійно, вище цільового → 10.</p>
             <p class="hint">Бюджет: значення масштабується від 0 до 10 відносно «Бажаного бюджету».</p>
             <p class="hint">Витрати клієнта: 0 → -5, далі масштабується від 0 до 10 відносно «Бажаних витрат».</p>
             <p class="hint">Payment verified: є → 10, немає → -10.</p>
