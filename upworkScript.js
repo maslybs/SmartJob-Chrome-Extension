@@ -16,8 +16,11 @@ const FETCH_MAX_PER_RUN = 8;
 const FETCH_MAX_QUEUE = 12;
 const SCROLL_DEBOUNCE_MS = 600;
 const DETAILS_CACHE_KEY = 'jobDetailsCache';
-const DETAILS_CACHE_TTL_MS = 12 * 60 * 60 * 1000;
+const DETAILS_CACHE_TTL_MS = 2 * 24 * 60 * 60 * 1000;
 const DETAILS_CACHE_MAX = 200;
+const EVAL_CACHE_KEY = 'smartjobEvalCache';
+const EVAL_CACHE_TTL_MS = 2 * 24 * 60 * 60 * 1000;
+const EVAL_CACHE_MAX = 300;
 const fetchCache = new Map();
 const fetchInFlight = new Map();
 const fetchQueue = [];
@@ -176,6 +179,75 @@ function scheduleDetailsCacheSave(cache) {
         chrome.storage.local.set({ [DETAILS_CACHE_KEY]: cache || {} });
         detailsCacheSaveTimer = null;
     }, 1000);
+}
+
+function loadEvalCache() {
+    try {
+        const raw = window.localStorage.getItem(EVAL_CACHE_KEY);
+        const cache = raw ? JSON.parse(raw) : {};
+        return pruneEvalCache(cache);
+    } catch (error) {
+        return {};
+    }
+}
+
+function saveEvalCache(cache) {
+    try {
+        window.localStorage.setItem(EVAL_CACHE_KEY, JSON.stringify(cache || {}));
+    } catch (error) {
+        // Ignore storage errors.
+    }
+}
+
+function pruneEvalCache(cache) {
+    if (!cache) return {};
+    const now = Date.now();
+    let changed = false;
+    Object.keys(cache).forEach(key => {
+        const entry = cache[key];
+        if (!entry || now - (entry.ts || 0) > EVAL_CACHE_TTL_MS) {
+            delete cache[key];
+            changed = true;
+        }
+    });
+    const entries = Object.entries(cache);
+    if (entries.length > EVAL_CACHE_MAX) {
+        entries.sort((a, b) => (b[1]?.ts || 0) - (a[1]?.ts || 0));
+        const trimmed = entries.slice(0, EVAL_CACHE_MAX);
+        Object.keys(cache).forEach(key => delete cache[key]);
+        trimmed.forEach(([key, value]) => {
+            cache[key] = value;
+        });
+        changed = true;
+    }
+    if (changed) saveEvalCache(cache);
+    return cache;
+}
+
+function getEvalCacheKey(link, card) {
+    const url = link?.href || '';
+    return extractJobUidFromUrl(url)
+        || card?.getAttribute('data-ev-job-uid')
+        || url;
+}
+
+function getCachedEvaluation(cache, key) {
+    if (!cache || !key) return null;
+    const entry = cache[key];
+    if (!entry) return null;
+    if (Date.now() - (entry.ts || 0) > EVAL_CACHE_TTL_MS) {
+        delete cache[key];
+        saveEvalCache(cache);
+        return null;
+    }
+    return entry;
+}
+
+function setCachedEvaluation(cache, key, entry) {
+    if (!cache || !key || !entry) return;
+    cache[key] = { ...entry, ts: Date.now() };
+    pruneEvalCache(cache);
+    saveEvalCache(cache);
 }
 
 const defaultScoreSettings = {
@@ -760,18 +832,31 @@ function ensureEvaluateControl(card, link, hostElement) {
     const existing = card.querySelector('.smartjob-evaluate');
     if (existing) return existing;
 
+    const evalCache = loadEvalCache();
+    const evalKey = getEvalCacheKey(link, card);
+    const cachedEval = getCachedEvaluation(evalCache, evalKey);
+
     const wrapper = document.createElement('div');
     wrapper.className = 'smartjob-evaluate';
     wrapper.setAttribute('data-smartjob-control', 'true');
     const button = document.createElement('button');
     button.type = 'button';
     button.className = 'smartjob-evaluate-btn';
-    button.textContent = 'Оцінити';
+    button.textContent = cachedEval ? 'Оцінено' : 'Оцінити';
     const result = document.createElement('span');
     result.className = 'smartjob-evaluate-result';
 
     wrapper.appendChild(button);
     wrapper.appendChild(result);
+
+    if (cachedEval) {
+        const cachedContent = cachedEval.content || '';
+        const cachedVerdict = cachedEval.verdict || parseVerdict(cachedContent);
+        if (cachedVerdict) {
+            setEvaluateResult(result, cachedVerdict,
+                cachedVerdict === 'ВАРТО' ? 'good' : (cachedVerdict === 'НЕ ВАРТО' ? 'bad' : undefined));
+        }
+    }
 
     const stopEvent = event => {
         event.preventDefault();
@@ -796,6 +881,7 @@ function ensureEvaluateControl(card, link, hostElement) {
         button.disabled = true;
         button.textContent = 'Оцінюю...';
         setEvaluateResult(result, '');
+        let evaluationOk = false;
         try {
             const info = extractJobInfoFromPage(card);
             if (!info.description) {
@@ -834,11 +920,13 @@ function ensureEvaluateControl(card, link, hostElement) {
             } else {
                 setEvaluateResult(result, verdict);
             }
+            setCachedEvaluation(evalCache, evalKey, { verdict, content });
+            evaluationOk = true;
         } catch (error) {
             setEvaluateResult(result, error?.message || 'Не вдалося');
         } finally {
             button.disabled = false;
-            button.textContent = 'Оцінити';
+            button.textContent = evaluationOk ? 'Оцінено' : 'Оцінити';
         }
     });
 
@@ -927,6 +1015,7 @@ async function upwork() {
             const wantsMemberSince = checkboxMemberSince === true || (checkboxMemberSince !== false && checkboxes['checkboxMemberSince']);
             const jobUid = extractJobUidFromUrl(a.href);
             const cachedDetails = getCachedDetails(detailsCache, jobUid);
+            const hasCachedDetails = Boolean(cachedDetails);
 
             let hireRateText = null;
             let connectsText = null;
@@ -966,9 +1055,12 @@ async function upwork() {
                 }
             }
 
-            const needsFetch = (wantsHireRate && !hireRateText)
+            let needsFetch = (wantsHireRate && !hireRateText)
                 || (wantsConnects && !connectsText)
                 || (wantsMemberSince && !memberSinceText);
+            if (hasCachedDetails) {
+                needsFetch = false;
+            }
 
             if (needsFetch && !hasContent) {
                 if (isFetchBlocked()) {
