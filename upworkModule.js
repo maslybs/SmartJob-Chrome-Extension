@@ -840,6 +840,11 @@ function waitForLinks(timeout = 15000) {
     });
 }
 
+function isJobListCard(card) {
+    if (!card) return false;
+    return Boolean(card.closest('[data-test="job-tile-list"], [data-test="JobsList"]'));
+}
+
 export async function upwork() {
     console.log("Script executed on Upwork.com");
 
@@ -866,6 +871,9 @@ export async function upwork() {
     for (var l = 0; l < links.length && links.length > 0; l++) {
         var a = links[l];
         const refNode = a.closest('section.air3-card-section, article.job-tile') || a.parentNode.parentNode.parentNode;
+        if (!isJobListCard(refNode)) {
+            continue;
+        }
         const enhancementId = `upworkSearchEnhancement${l + 1}`;
         const shouldFetchDetails = checkboxHireRate || checkboxConnectsRequired || checkboxMemberSince;
         const enhancementRow = ensureEnhancementRow(refNode, a, enhancementId);
