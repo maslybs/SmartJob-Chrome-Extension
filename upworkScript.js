@@ -370,6 +370,13 @@ function createDetailNode(text) {
     return node;
 }
 
+function getCleanText(root) {
+    if (!root) return '';
+    const clone = root.cloneNode(true);
+    clone.querySelectorAll('.smartjob-enhancement, .smartjob-evaluate, .UpworkJobScore').forEach(el => el.remove());
+    return clone.innerText || '';
+}
+
 function extractHireRateText(card, doc) {
     const selectors = [
         'li[data-qa="client-job-posting-stats"]',
@@ -380,26 +387,52 @@ function extractHireRateText(card, doc) {
         '[data-test="job-activity-summary"]',
         '[data-test="job-activity-data"]',
     ];
-    let source = null;
+    const candidates = [];
     for (const selector of selectors) {
-        source = card?.querySelector(selector) || doc?.querySelector(selector);
-        if (source) break;
-    }
-    if (source) {
+        const source = card?.querySelector(selector) || doc?.querySelector(selector);
+        if (!source) continue;
         const inner = source.querySelector('div') || source;
         const text = inner?.innerText?.trim() || source?.innerText?.trim();
-        if (text) return text;
+        if (text) candidates.push(text);
     }
 
-    const textSource = card?.innerText || doc?.body?.innerText || '';
-    if (!textSource) return null;
-    const hireMatch = textSource.match(/(\d{1,3})%\s*hire rate/i);
-    const openMatch = textSource.match(/(\d+)\s*open jobs?/i);
-    if (!hireMatch && !openMatch) return null;
-    const parts = [];
-    if (hireMatch) parts.push(`${hireMatch[1]}% hire rate`);
-    if (openMatch) parts.push(`${openMatch[1]} open jobs`);
-    return parts.join(', ');
+    const textSource = card ? getCleanText(card) : getCleanText(doc?.body);
+    if (textSource) {
+        const lines = textSource.split('\n').map(line => line.trim()).filter(Boolean);
+        lines.forEach(line => {
+            if (/hire rate/i.test(line)) {
+                candidates.push(line);
+            }
+        });
+    }
+
+    if (!candidates.length) return null;
+
+    let best = null;
+    let bestRate = -1;
+    let bestOpen = null;
+
+    for (const text of candidates) {
+        const rateMatch = text.match(/(\d{1,3})%\s*hire rate/i);
+        const openMatch = text.match(/(\d+)\s*open jobs?/i);
+        const rate = rateMatch ? parseInt(rateMatch[1], 10) : null;
+        if (rate !== null && rate > bestRate) {
+            bestRate = rate;
+            best = text;
+            bestOpen = openMatch ? openMatch[1] : null;
+        } else if (bestRate < 0 && rate === null && openMatch && !best) {
+            best = text;
+            bestOpen = openMatch ? openMatch[1] : null;
+        }
+    }
+
+    if (bestRate >= 0) {
+        const parts = [`${bestRate}% hire rate`];
+        if (bestOpen) parts.push(`${bestOpen} open jobs`);
+        return parts.join(', ');
+    }
+
+    return best;
 }
 
 function extractConnectsText(doc) {
@@ -423,7 +456,7 @@ function extractConnectsText(doc) {
             }
         }
     }
-    const fallback = doc.body?.innerText || '';
+    const fallback = getCleanText(doc.body);
     const match = fallback.match(/(\d+)\s*connects?/i);
     if (match) return `${match[1]} Connects Required`;
     return null;
@@ -986,6 +1019,9 @@ function waitForLinks(timeout = 15000) {
 }
 
 async function captureJobDetailsFromPage() {
+    if (!/\/jobs\//.test(window.location.pathname)) {
+        return;
+    }
     const uid = extractJobUidFromUrl(window.location.href)
         || document.querySelector('[data-ev-job-uid]')?.getAttribute('data-ev-job-uid');
     if (!uid) return;
