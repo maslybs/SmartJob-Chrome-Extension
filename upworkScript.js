@@ -717,14 +717,16 @@ function calculateScore(card, doc, settings, details) {
     return total / weightSum;
 }
 
-function getScoreClass(score) {
+function getScoreClass(score, forceGray) {
+    if (forceGray) return 'badge-gray';
     if (score >= 7) return 'badge-green';
     if (score >= 5) return 'badge-light-green';
     if (score >= 3) return 'badge-yellow';
     return 'badge-red';
 }
 
-function getRowClass(score) {
+function getRowClass(score, forceGray) {
+    if (forceGray) return 'smartjob-row-gray';
     if (score >= 7) return 'smartjob-row-green';
     if (score >= 5) return 'smartjob-row-light-green';
     if (score >= 3) return 'smartjob-row-yellow';
@@ -736,20 +738,21 @@ function getHireRateNode(card, doc) {
     return createDetailNode(text);
 }
 
-function applyRowHighlight(card, score) {
+function applyRowHighlight(card, score, forceGray) {
     const row = card?.querySelector('.smartjob-enhancement');
     if (!row) return;
     row.classList.remove(
         'smartjob-row-green',
         'smartjob-row-light-green',
         'smartjob-row-yellow',
-        'smartjob-row-red'
+        'smartjob-row-red',
+        'smartjob-row-gray'
     );
     if (score === null || score === undefined) return;
-    row.classList.add(getRowClass(score));
+    row.classList.add(getRowClass(score, forceGray));
 }
 
-function renderScoreBadge(card, score) {
+function renderScoreBadge(card, score, forceGray) {
     if (!card || score === null || score === undefined) return;
     const enhancementRow = card.querySelector('.smartjob-enhancement');
     const actions = card.querySelector('[class="job-tile-actions"], [data-test="JobTileActions"]');
@@ -767,9 +770,9 @@ function renderScoreBadge(card, score) {
         wrapper.appendChild(label);
     }
 
-    label.className = getScoreClass(score);
+    label.className = getScoreClass(score, forceGray);
     label.textContent = score.toFixed(1);
-    applyRowHighlight(card, score);
+    applyRowHighlight(card, score, forceGray);
 }
 
 function placeEnhancement(card, link, element) {
@@ -1221,8 +1224,12 @@ async function upwork() {
         }
 
         if (scoreSettings.enabled) {
+            const hireRateText = cachedDetails?.hireRateText || extractHireRateText(refNode, doc);
+            const rateVal = parseHireRate(hireRateText);
+            const isHireRateZero = (rateVal !== null && rateVal === 0);
+
             const score = calculateScore(refNode, doc, scoreSettings, cachedDetails);
-            renderScoreBadge(refNode, score);
+            renderScoreBadge(refNode, score, isHireRateZero);
         }
     }
 }

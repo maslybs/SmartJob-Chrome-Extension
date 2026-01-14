@@ -6,7 +6,7 @@
     margin-right: 8px;
 }
 
-.UpworkJobScore > h3 {
+.UpworkJobScore>h3 {
     border: 2px solid #181818;
     color: #181818;
     font-size: 16px;
@@ -23,7 +23,8 @@
 .badge-green,
 .badge-light-green,
 .badge-yellow,
-.badge-red {
+.badge-red,
+.badge-gray {
     border: 4px solid;
     border-radius: 5px;
     margin-bottom: 0;
@@ -46,6 +47,11 @@
 
 .badge-red {
     background-color: #ff4500;
+}
+
+.badge-gray {
+    background-color: #6c757d;
+    color: #ffffff;
 }
 
 .smartjob-enhancement {
@@ -115,6 +121,10 @@
 
 .smartjob-row-red {
     background-color: #ff4500;
+}
+
+.smartjob-row-gray {
+    background-color: #6c757d;
 }
 
 .smartjob-evaluate {
