@@ -58,11 +58,11 @@
                     <input id="hireRateTarget" type="number" step="1" min="0" max="100" />
                 </label>
                 <label class="weight">
-                    Бажаний бюджет (USD)
+                    Поріг бюджету (5.0 балів)
                     <input id="budgetTarget" type="number" step="50" min="0" />
                 </label>
                 <label class="weight">
-                    Бажані витрати клієнта (USD)
+                    Поріг витрат клієнта (5.0 балів)
                     <input id="clientPaidTarget" type="number" step="100" min="0" />
                 </label>
                 <label class="weight">
@@ -116,7 +116,7 @@
                 </label>
                 <label class="weight">
                     Витрати клієнта (важливість)
-                    <span class="subhint">Оцінка витрат порівнюється з «Бажаними витратами клієнта» вище.</span>
+                    <span class="subhint">Оцінка 5.0 досягається при досягненні «Порігу витрат», далі вона плавно росте до 10.</span>
                     <div class="range-row">
                         <input type="range" step="0.5" min="0" max="5" data-weight="clientPaid" />
                         <span class="range-value" data-value-for="clientPaid"></span>
@@ -131,7 +131,7 @@
                 </label>
                 <label class="weight">
                     Бюджет (важливість)
-                    <span class="subhint">Оцінка бюджету порівнюється з «Бажаним бюджетом» вище.</span>
+                    <span class="subhint">Оцінка 5.0 досягається при досягненні «Порігу бюджету», далі вона плавно росте до 10.</span>
                     <div class="range-row">
                         <input type="range" step="0.5" min="0" max="5" data-weight="budget" />
                         <span class="range-value" data-value-for="budget"></span>
@@ -209,9 +209,8 @@
             <h2>Як працює рейтинг</h2>
             <p class="hint">Фінальний бал = середнє значення всіх знайдених критеріїв з урахуванням важливості.</p>
             <p class="hint">Hire rate: нижче мінімального → 0, між мінімальним і цільовим → лінійно, вище цільового → 10.</p>
-            <p class="hint">Бюджет: значення масштабується від 0 до 10 відносно «Бажаного бюджету».</p>
-            <p class="hint">Витрати клієнта: 0 → -5, далі масштабується від 0 до 10 відносно «Бажаних витрат».</p>
-            <p class="hint">Payment verified: є → 10, немає → -10.</p>
+            <p class="hint">Бюджет та витрати: використовується "крива насичення". Значення рівне порогу дає 5.0 балів. Дуже високі значення (4х+) наближають бал до 10.0.</p>
+            <p class="hint">Payment verified: є → 10, немає → 0.</p>
             <p class="hint">Рейтинг клієнта масштабується від 0 до 10 відносно «Бажаного рейтингу».</p>
             <p class="hint">Свіжість: що новіше оголошення, то вищий бал.</p>
             <p class="hint">Якщо якогось поля немає — воно не впливає на підсумок.</p>

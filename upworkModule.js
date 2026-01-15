@@ -293,25 +293,34 @@ function getCountryFromText(text) {
 
 function scoreProposals(value) {
     if (!value) return null;
-    const mapping = {
-        'less than 5': 10,
-        '5 to 10': 9,
-        '10 to 15': 8,
-        '15 to 20': 7,
-        '20 to 50': 5,
-        '50+': 2,
-    };
-    return mapping[value.toLowerCase().trim()] ?? null;
+    const lower = value.toLowerCase().trim();
+    if (lower.includes('less than 5')) return 10;
+    if (lower.includes('5 to 10')) return 9;
+    if (lower.includes('10 to 15')) return 8;
+    if (lower.includes('15 to 20')) return 7;
+    if (lower.includes('20 to 50') || /20-50/.test(lower)) return 5;
+    if (lower.includes('50+') || lower.includes('over 50')) return 2;
+    // Fallback for numeric extraction if exact text not found
+    const match = lower.match(/(\d+)\s*(to|-)\s*(\d+)/);
+    if (match) {
+        const avg = (parseInt(match[1], 10) + parseInt(match[3], 10)) / 2;
+        if (avg <= 5) return 10;
+        if (avg <= 10) return 9;
+        if (avg <= 15) return 8;
+        if (avg <= 20) return 7;
+        if (avg <= 50) return 5;
+        return 2;
+    }
+    return null;
 }
 
 function scoreExperience(value) {
     if (!value) return null;
-    const mapping = {
-        'expert': 10,
-        'intermediate': 7.5,
-        'entry level': 5,
-    };
-    return mapping[value.toLowerCase().trim()] ?? null;
+    const lower = value.toLowerCase().trim();
+    if (lower.includes('expert')) return 10;
+    if (lower.includes('intermediate')) return 7.5;
+    if (lower.includes('entry')) return 5;
+    return null;
 }
 
 function scoreBudget(value, settings) {
@@ -321,8 +330,10 @@ function scoreBudget(value, settings) {
     const amount = parseFloat(match[1].replace(/,/g, ''));
     if (!Number.isFinite(amount) || amount < 0) return null;
     const target = toNumber(settings.budgetTarget, defaultScoreSettings.budgetTarget);
-    if (target <= 0) return null;
-    return Math.min(10, (amount / target) * 10);
+    if (target <= 0) return 0;
+    // Saturation curve: score = 10 * (amount / (amount + target))
+    // If amount == target, score is 5.0
+    return 10 * (amount / (amount + target));
 }
 
 function parseHireRate(value) {
@@ -367,7 +378,7 @@ function scoreTime(value) {
 
 function scorePaymentStatus(value) {
     if (!value) return null;
-    return value.includes('Payment verified') ? 10 : -10;
+    return value.includes('Payment verified') ? 10 : 0; // Changed penalty from -10 to 0
 }
 
 function scoreClientPaid(value, settings) {
@@ -377,10 +388,12 @@ function scoreClientPaid(value, settings) {
     if (cleaned.includes('k')) amount *= 1000;
     if (cleaned.includes('m')) amount *= 1000000;
     if (!Number.isFinite(amount)) return null;
-    if (amount === 0) return -5;
+    if (amount === 0) return 0;
     const target = toNumber(settings.clientPaidTarget, defaultScoreSettings.clientPaidTarget);
-    if (target <= 0) return null;
-    return Math.min(10, (amount / target) * 10);
+    if (target <= 0) return 0;
+    // Saturation curve: score = 10 * (amount / (amount + target))
+    // If amount == target, score is 5.0
+    return 10 * (amount / (amount + target));
 }
 
 function scoreClientRating(value, settings) {
@@ -394,24 +407,11 @@ function scoreClientRating(value, settings) {
 
 function scorePostingTime(value) {
     if (!value) return null;
-    const presets = {
-        'yesterday': 2,
-        'last week': 0,
-        '2 weeks ago': 0,
-        'last month': 0,
-        '2 months ago': 0,
-        'last quarter': 0,
-        '2 quarters ago': 0,
-        '3 quarters ago': 0,
-        'last year': 0,
-        '2 years ago': 0,
-    };
     const lower = value.toLowerCase().trim();
-    if (Object.prototype.hasOwnProperty.call(presets, lower)) {
-        return presets[lower];
-    }
+    if (lower.includes('yesterday') || lower.includes('1 day ago')) return 2;
+    if (lower.includes('week') || lower.includes('month') || lower.includes('year')) return 0;
 
-    const match = lower.match(/(\d+)\s*(second|minute|hour|day|month|year)s?\s*ago/);
+    const match = lower.match(/(\d+)\s*(second|minute|hour|day)s?\s*ago/);
     if (!match) return null;
 
     const amount = parseInt(match[1], 10);
@@ -421,18 +421,16 @@ function scorePostingTime(value) {
         minute: 60,
         hour: 3600,
         day: 86400,
-        month: 2592000,
-        year: 31536000,
     }[unit] || 0);
 
-    if (seconds < 900) return 10;
-    if (seconds < 1800) return 9;
-    if (seconds < 3600) return 8;
-    if (seconds < 7200) return 7;
-    if (seconds < 14400) return 6;
-    if (seconds < 21600) return 5;
-    if (seconds < 43200) return 4;
-    if (seconds < 86400) return 3;
+    if (seconds < 900) return 10; // < 15m
+    if (seconds < 1800) return 9; // < 30m
+    if (seconds < 3600) return 8; // < 1h
+    if (seconds < 7200) return 7; // < 2h
+    if (seconds < 14400) return 6; // < 4h
+    if (seconds < 28800) return 5; // < 8h
+    if (seconds < 43200) return 4; // < 12h
+    if (seconds < 86400) return 3; // < 24h
     return 0;
 }
 
@@ -525,7 +523,8 @@ function calculateScore(card, doc, settings, details) {
     });
 
     if (weightSum === 0) return null;
-    return total / weightSum;
+    const finalScore = total / weightSum;
+    return Math.max(0, Math.min(10, finalScore)); // Clamp score to 0-10 range
 }
 
 function getScoreClass(score, forceGray) {
