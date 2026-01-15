@@ -13,7 +13,7 @@ const FETCH_ERROR_DELAY_MS = 10000;
 const FETCH_ERROR_MAX_DELAY_MS = 60000;
 const FETCH_ERROR_DELAY_MULTIPLIER = 1.7;
 const EVAL_CACHE_KEY = 'smartjobEvalCache';
-const EVAL_CACHE_TTL_MS = 2 * 24 * 60 * 60 * 1000;
+const EVAL_CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // Increased to 7 days
 const EVAL_CACHE_MAX = 300;
 const fetchCache = new Map();
 const fetchQueue = [];
@@ -103,7 +103,8 @@ async function processFetchQueue() {
             reject(error);
             applyFetchBackoff();
         }
-        await new Promise(r => setTimeout(r, fetchDelayMs));
+        const delay = getRandomDelay(FETCH_BASE_DELAY_MIN_MS, FETCH_BASE_DELAY_MAX_MS);
+        await new Promise(r => setTimeout(r, delay));
     }
     fetchActive = false;
 }

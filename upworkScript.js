@@ -16,7 +16,7 @@ const FETCH_MAX_PER_RUN = 8;
 const FETCH_MAX_QUEUE = 12;
 const SCROLL_DEBOUNCE_MS = 600;
 const DETAILS_CACHE_KEY = 'jobDetailsCache';
-const DETAILS_CACHE_TTL_MS = 2 * 24 * 60 * 60 * 1000;
+const DETAILS_CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // Increased to 7 days
 const DETAILS_CACHE_MAX = 200;
 const EVAL_CACHE_KEY = 'smartjobEvalCache';
 const EVAL_CACHE_TTL_MS = 2 * 24 * 60 * 60 * 1000;
@@ -122,7 +122,8 @@ async function processFetchQueue() {
             reject(error);
             applyFetchBackoff();
         }
-        await new Promise(r => setTimeout(r, fetchDelayMs));
+        const delay = getRandomDelay(FETCH_BASE_DELAY_MIN_MS, FETCH_BASE_DELAY_MAX_MS);
+        await new Promise(r => setTimeout(r, delay));
     }
     fetchActive = false;
 }
